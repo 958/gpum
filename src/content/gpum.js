@@ -547,27 +547,28 @@
             function showNotification(newMails) {
                 let title = util.getLocaleString("gotMails", [newMails.length]);
 
-                let container = <vbox id="mail-entry-container"></vbox>;
+                let xmls = ['<vbox id="mail-entry-container">'];
                 newMails.forEach(function (mail, idx) {
-                    let mailContainer =
-                        <hbox id={"mail-" + idx} class="mail-entry"
-                              tooltiptext={mail.entry.summary} >
-                            <description class="link mail-title">{mail.entry.title}</description>
-                            <spacer flex="1" />
-                            <description class="mail-author"
-                                         tooltiptext={mail.entry.author.email}
-                                         >{mail.entry.author.name}</description>
-                        </hbox>;
+                    let mailContainer = 
+                        '<hbox id="mail-' + idx + '" class="mail-entry" '
+                            + 'tooltiptext="' + mail.entry.summary + '" >'
+                            + '<description class="link mail-title">' + mail.entry.title + '</description>'
+                            + '<spacer flex="1" />'
+                            + '<description class="mail-author" '
+                                + 'tooltiptext="' + mail.entry.author.email + '"'
+                                    + '>' + mail.entry.author.name + '</description>'
+                        + '</hbox>';
 
-                    container.appendChild(mailContainer);
+                    xmls.push(mailContainer);
                 });
+                xmls.push('</vbox>');
 
                 window.openDialog(
                     "chrome://gpum/content/notification/notification.xul",
                     null,
                     'chrome,dialog=yes,titlebar=no,popup=yes', {
                         title    : title,
-                        xml      : container,
+                        xml      : xmls.join(''),
                         duration : 1000 * util.getIntPref(util.getPrefKey("notificationDisplayDuration")),
                         onClick  : function (ev, notification) {
                             if (ev.button)

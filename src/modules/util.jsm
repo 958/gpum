@@ -393,6 +393,11 @@ const util = {
         return this.hasNativeISOParser ?
             new Date(isoString) : this.ISO8601DateUtils.parse(isoString);
     },
+    parseToDom: function (src) {
+        let parser = Cc["@mozilla.org/xmlextras/domparser;1"]
+             .createInstance(Ci.nsIDOMParser);
+        return parser.parseFromString(src, 'application/xml').documentElement;
+    }
 };
 
 util.lazy(util, "isWindows", function () {

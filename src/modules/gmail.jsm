@@ -267,9 +267,7 @@ Gmail.prototype = {
 
     parseXML:
     function parseXML(src) {
-        let parser = Cc["@mozilla.org/xmlextras/domparser;1"]
-             .createInstance(Ci.nsIDOMParser);
-        let xml = parser.parseFromString(src, 'application/xml').documentElement;
+        let xml = util.parseToDom(src);
         return {
             title: xml.querySelector('title').textContent,
             tagline: xml.querySelector('tagline').textContent,

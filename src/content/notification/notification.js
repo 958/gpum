@@ -235,7 +235,7 @@ var Notification = (function () {
         },
 
         /**
-         * Convert E4X to DOM object
+         * Convert XML string to DOM object
          * Original code by piro (http://d.hatena.ne.jp/teramako/20081113/p1#c1226602807)
          * @param {} xml
          * @param {} xmlns
@@ -243,9 +243,10 @@ var Notification = (function () {
          */
         xmlToDom:
         function xmlToDom(xml) {
+            util.message(xml);
             let docElem = (new DOMParser).parseFromString(
                 '<root xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">'
-                    + xml.toXMLString()
+                    + xml
                     + "</root>", "application/xml"
             ).documentElement;
 
