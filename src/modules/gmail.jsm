@@ -40,7 +40,9 @@ function Gmail(args) {
     const protocol = args.protocol || "https://";
     const base     = "mail.google.com";
 
-    let mailURL = protocol + base + (args.domain ? "/a/" + args.domain + "/" : "/mail/");
+    let mailURL = protocol + base + (args.domain ?
+        "/a/" + args.domain + "/" :
+        "/mail" + (args.accountNumber != null ? "/u/" + args.accountNumber : "") + "/");
 
     this.checkAllMail = args.checkAllMail;
 
@@ -151,6 +153,7 @@ Gmail.prototype = {
     function post(args, next) {
         let threadID = args.threadID;
         let action   = args.action;
+        let retry    = 0;
 
         let postURL = this.simpleModeURL.replace("^http:", "https:");
 
@@ -159,7 +162,7 @@ Gmail.prototype = {
             http.post(postURL, function (req) {
                 if (req.status === 200) {
                     if (typeof next === "function") next(req);
-                } else {
+                } else if (retry++ < 3) {
                     self.getAt(doPost);
                 }
             }, {
@@ -262,11 +265,47 @@ Gmail.prototype = {
 
     get schedulerInterval() this._schedulerInterval,
 
+    parseXML:
+    function parseXML(src) {
+        let parser = Cc["@mozilla.org/xmlextras/domparser;1"]
+             .createInstance(Ci.nsIDOMParser);
+        let xml = parser.parseFromString(src, 'application/xml').documentElement;
+        return {
+            title: xml.querySelector('title').textContent,
+            tagline: xml.querySelector('tagline').textContent,
+            fullcount: xml.querySelector('fullcount').textContent,
+            link: {
+                rel: xml.querySelector('link').getAttribute('rel'),
+                href: xml.querySelector('link').getAttribute('href'),
+                type: xml.querySelector('link').getAttribute('type'),
+            },
+            modified: xml.querySelector('modified').textContent,
+            entry: Array.slice(xml.querySelectorAll('entry')).map(function (entry) {
+                return {
+                    title: entry.querySelector('title').textContent,
+                    summary: entry.querySelector('summary').textContent,
+                    link: {
+                        rel: entry.querySelector('link').getAttribute('rel'),
+                        href: entry.querySelector('link').getAttribute('href'),
+                        type: entry.querySelector('link').getAttribute('type'),
+                    },
+                    modified: entry.querySelector('modified', entry).textContent,
+                    issued: entry.querySelector('issued').textContent,
+                    id: entry.querySelector('id').textContent,
+                    author: {
+                        name: entry.querySelector('author').querySelector('name').textContent,
+                        email: entry.querySelector('author').querySelector('email').textContent,
+                    }
+                }
+            }),
+        };
+    },
+
     processResponse:
     function processResponse(req) {
         let src = req.responseText;
         src = src.replace(/xmlns="[^"]*"/, "");
-        let xml = util.createXML(src);
+        let xml = this.parseXML(src);
 
         this.updateUnreads(xml);
         this.dispatchEvents(this.registeredWindows);
@@ -322,7 +361,7 @@ Gmail.prototype = {
     function updateUnreads(xml) {
         const self = this;
 
-        self.unreadCount = Math.max(Number(xml.fullCount), Number(xml.entry.length()));
+        self.unreadCount = Math.max(Number(xml.fullcount), xml.entry.length);
 
         let knownMails = { __proto__ : null };
         self.unreads.forEach(function (unread) knownMails[unread.id] = true);
@@ -332,8 +371,8 @@ Gmail.prototype = {
 
         for each (let entry in xml.entry)
         {
-            let id = entry.id.toString();
-            let modified = util.parseISO8601(entry.modified.toString());
+            let id = entry.id;
+            let modified = util.parseISO8601(entry.modified);
             let unread   = { entry : entry, time : modified, id : id };
 
             self.unreads.push(unread);
@@ -575,7 +614,7 @@ Gmail.prototype = {
 
 Gmail.getLogins = function getLogins() {
     let lm     = Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager);
-    let urls   = ["http://www.google.com", "https://www.google.com"];
+    let urls   = ["http://www.google.com", "https://www.google.com", "http://accounts.google.com", "https://accounts.google.com"];
     let logins = urls.reduce(function (accum, url) accum.concat(lm.findLogins({}, url, url, null) || []), []);
 
     return logins;

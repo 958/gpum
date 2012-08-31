@@ -393,17 +393,6 @@ const util = {
         return this.hasNativeISOParser ?
             new Date(isoString) : this.ISO8601DateUtils.parse(isoString);
     },
-
-    // ============================================================ //
-    //  E4X
-    // ============================================================ //
-
-    createXML:
-    function createXML(src) {
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=336551
-        src = src.replace(/^<\?xml\s+version\s*=\s*(?:"[^"]+"|'[^']+')[^?]*\?>/, "");
-        return new XML(src);
-    }
 };
 
 util.lazy(util, "isWindows", function () {

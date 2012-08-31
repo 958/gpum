@@ -94,7 +94,8 @@
         {
             gmail = util.storage.gmail = new Gmail({
                 checkAllMail : util.getBoolPref(util.getPrefKey("checkAll"), false),
-                interval     : 1000 * 60 * util.getIntPref(util.getPrefKey("updateInterval"), 0)
+                interval     : 1000 * 60 * util.getIntPref(util.getPrefKey("updateInterval"), 0),
+                accountNumber: 0
             });
 
             gmail.setupScheduler();
@@ -133,7 +134,7 @@
         inboxLabel.addEventListener("click", function (ev) {
             if (ev.button !== 0)
                 return;
-            openLink(gmail.xml.link.@href.toString());
+            openLink(gmail.xml.link.href);
         }, false);
 
         unreadContainer.appendChild(title);
@@ -343,7 +344,7 @@
 
             scrollBox.appendChild(entryContainer);
 
-            let id = Gmail.getThreadIdFromThreadURI(entry.link.@href);
+            let id = Gmail.getThreadIdFromThreadURI(entry.link.href);
 
             function handleClick(ev) {
                 if (ev.button !== 0)
@@ -378,7 +379,7 @@
                     gmail.starThread(id);
                     break;
                 case title:
-                    let (url = entry.link.@href.toString())
+                    let (url = entry.link.href)
                         openLink(url, !util.getBoolPref(util.getPrefKey("openLinkClosePopup"), false));
                     destroy();
                     break;
@@ -397,7 +398,7 @@
                             iframe.setAttribute("src", url);
                         });
 
-                        title.setAttribute("url", entry.link.@href.toString());
+                        title.setAttribute("url", entry.link.href);
                         title.__gpumDestroy__ = destroy;
 
                         let popupOrigin = entryContainer;
@@ -522,7 +523,7 @@
                 let message = newMail.entry.summary;
 
                 gpum.showNotification(title, message, function () {
-                    openUILinkIn(newMail.entry.link.@href, "tab");
+                    openUILinkIn(newMail.entry.link.href, "tab");
                     gmail.removeFromUnreads(newMail);
                 });
             },
@@ -550,12 +551,12 @@
                 newMails.forEach(function (mail, idx) {
                     let mailContainer =
                         <hbox id={"mail-" + idx} class="mail-entry"
-                              tooltiptext={mail.entry.summary.text()} >
-                            <description class="link mail-title">{mail.entry.title.text()}</description>
+                              tooltiptext={mail.entry.summary} >
+                            <description class="link mail-title">{mail.entry.title}</description>
                             <spacer flex="1" />
                             <description class="mail-author"
-                                         tooltiptext={mail.entry.author.email.text()}
-                                         >{mail.entry.author.name.text()}</description>
+                                         tooltiptext={mail.entry.author.email}
+                                         >{mail.entry.author.name}</description>
                         </hbox>;
 
                     container.appendChild(mailContainer);
@@ -584,7 +585,7 @@
                             if (!mail)
                                 return;
 
-                            openLink(mail.entry.link.@href.toString());
+                            openLink(mail.entry.link.href);
                             gmail.removeFromUnreads(mail);
                             window.focus();
 
@@ -643,7 +644,7 @@
                     for each (let unread in gmail.unreads)
                         appendEntry(scrollBox, unread);
 
-                    inboxLabel.textContent = gmail.xml.title.text().toString().replace(/^Gmail - /, "");
+                    inboxLabel.textContent = gmail.xml.title.replace(/^Gmail - /, "");
 
                     popup.openPopup(ev.originalTarget, "bottomcenter topright");
                 }

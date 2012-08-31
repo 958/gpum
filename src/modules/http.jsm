@@ -117,7 +117,7 @@ const http = {
         opts = opts || {};
         opts.header = opts.header || {};
         opts.header["Content-type"] = "application/x-www-form-urlencoded";
-        opts.header["Content-length"] = params.length;
+        //opts.header["Content-length"] = params.length;
         opts.header["Connection"] = "close";
 
         return this.request("POST", url, callback, params, opts);
